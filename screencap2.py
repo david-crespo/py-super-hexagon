@@ -100,6 +100,7 @@ if __name__ == '__main__':
     from pngcanvas import PNGCanvas
     c = PNGCanvas(sp.width, sp.height)
     for x in range(sp.width):
+        if x % 100 == 0: print x
         for y in range(sp.height):
             c.point(x, y, color = sp.pixel(x, y))
 
