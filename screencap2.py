@@ -68,6 +68,32 @@ class ScreenPixel(object):
         # Return BGRA as RGBA
         return (r, g, b, a)
 
+    def pixels(self, x, y, N):
+        # Pixel data is unsigned char (8bit unsigned integer),
+        # and there are for (blue,green,red,alpha)
+        data_format = "BBBB" * N
+
+        # Calculate offset, based on
+        # http://www.markj.net/iphone-uiimage-pixel-color/
+        offset = 4 * ((self.width*int(round(y))) + int(round(x)))
+
+        # Unpack data from string into Python'y integers
+        big_tuple = struct.unpack_from(data_format, self._data, offset=offset)
+
+        results = []
+        for i in range(0, N * 4, 4):
+            b, g, r, a = big_tuple[ i : i+4 ]
+            results.append((r, g, b, a))
+
+        # Return BGRA as RGBA
+        return results
+
+
+def test():
+    sp = ScreenPixel()
+    sp.capture()
+    return sp
+
 
 if __name__ == '__main__':
     # Timer helper-function
@@ -99,10 +125,12 @@ if __name__ == '__main__':
 
     from pngcanvas import PNGCanvas
     c = PNGCanvas(sp.width, sp.height)
-    for x in range(sp.width):
-        if x % 100 == 0: print x
+    for x in range(0, sp.width, 120):
+        print x
         for y in range(sp.height):
-            c.point(x, y, color = sp.pixel(x, y))
+            ps = sp.pixels(x, y, 120)
+            for i, p in enumerate(ps):
+                c.point(x + i, y, color = p)
 
     with open("test.png", "wb") as f:
         f.write(c.dump())
