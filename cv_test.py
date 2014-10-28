@@ -1,33 +1,25 @@
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture(0)
+filename = 'test.jpg'
+img = cv2.imread(filename)
+gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
-while(1):
+ret, thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    # Take each frame
-    _, frame = cap.read()
+cv2.imshow('dst',thresh)
+if cv2.waitKey(0) & 0xff == 27:
+    cv2.destroyAllWindows()
 
-    # Convert BGR to HSV
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+# thresh = np.float32(thresh)
+# dst = cv2.cornerHarris(thresh,2,3,0.04)
 
-    # define range of blue color in HSV
-    # lower_color = np.array([130,100,20])
-    # upper_color = np.array([255,255,70])
-    lower_color = np.array([100,0,0])
-    upper_color = np.array([255,255,255])
+# #result is dilated for marking the corners, not important
+# dst = cv2.dilate(dst,None)
 
-    # Threshold the HSV image to get only blue colors
-    mask = cv2.inRange(hsv, lower_color, upper_color)
+# # Threshold for an optimal value, it may vary depending on the image.
+# img[dst>0.060*dst.max()]=[0,0,255]
 
-    # Bitwise-AND mask and original image
-    res = cv2.bitwise_and(frame,frame, mask= mask)
-
-    cv2.imshow('frame',frame)
-    cv2.imshow('mask',mask)
-    cv2.imshow('res',res)
-    k = cv2.waitKey(5) & 0xFF
-    if k == 27:
-        break
-
-cv2.destroyAllWindows()
+# cv2.imshow('dst',img)
+# if cv2.waitKey(0) & 0xff == 27:
+#     cv2.destroyAllWindows()
