@@ -88,6 +88,19 @@ class ScreenPixel(object):
         # Return BGRA as RGBA
         return results
 
+    def all_pixels(self):
+        N = 2880 * 1800
+        data_format = 'BBBB' * N
+        big_tuple = struct.unpack_from(data_format, self._data)
+
+        results = []
+        for i in range(0, N * 4, 4):
+            b, g, r, a = big_tuple[ i : i+4 ]
+            results.append((r, g, b, a))
+
+        return results
+
+
 
 def test():
     sp = ScreenPixel()
@@ -125,12 +138,15 @@ if __name__ == '__main__':
 
     from pngcanvas import PNGCanvas
     c = PNGCanvas(sp.width, sp.height)
-    for x in range(0, sp.width, 120):
-        print x
-        for y in range(sp.height):
-            ps = sp.pixels(x, y, 120)
-            for i, p in enumerate(ps):
-                c.point(x + i, y, color = p)
+    with timer('Get all pixels'):
+        pixels = sp.all_pixels()
+
+    for i, p in enumerate(pixels):
+        if i % 10000 == 0: print i
+        y, x = divmod(i, 2880)
+        c.point(x, y, color = p)
 
     with open("test.png", "wb") as f:
         f.write(c.dump())
+
+    print 'done'
