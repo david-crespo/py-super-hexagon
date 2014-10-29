@@ -118,6 +118,21 @@ def parse_frame(img):
     else:
         return None
 
+def show_img(img):
+    display = Display()
+    img.show()
+
+    # Wait for user to close the window or break out of it.
+    while display.isNotDone():
+        try:
+            pass
+        except KeyboardInterrupt:
+            display.done = True
+        if display.mouseRight:
+            display.done = True
+    display.quit()
+
+
 if __name__ == "__main__":
 
     # Run a test by drawing the reference frame parsed from a screenshot.
