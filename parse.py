@@ -47,7 +47,9 @@ class ParsedFrame:
         # (remove redundant vertices)
         self.center_vertices = simplify_polygon_by_angle(center_blob.hull())
 
-        self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
+        self.cursor_vertices = None
+        if cursor_blob:
+            self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
 
     def draw_frame(self, layer, linecolor=Color.RED, pointcolor=Color.WHITE):
         """
@@ -58,9 +60,9 @@ class ParsedFrame:
         """
 
         # Draw the cursor
-        width = 3
-        layer.polygon(self.cursor_vertices, color=linecolor,width=width)
-
+        if self.cursor_vertices:
+            width = 3
+            layer.polygon(self.cursor_vertices, color=linecolor,width=width)
 
         # Draw the center polygon.
         width = 5
@@ -79,7 +81,6 @@ class ParsedFrame:
             layer.circle(p, 5, color=pointcolor, filled=True)
         circle(self.center_point)
         for p in self.center_vertices:
-            print p
             circle(p)
 
 def parse_frame(img):
@@ -143,7 +144,7 @@ def parse_frame(img):
                 cursor_blob = b
                 if center_blob: break
 
-    if center_blob and cursor_blob:
+    if center_blob:
         return ParsedFrame(img, center_blob, cursor_blob, center_img)
     else:
         return None
