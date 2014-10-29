@@ -79,6 +79,7 @@ class ParsedFrame:
             layer.circle(p, 5, color=pointcolor, filled=True)
         circle(self.center_point)
         for p in self.center_vertices:
+            print p
             circle(p)
 
 def parse_frame(img):
