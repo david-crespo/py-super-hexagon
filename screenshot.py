@@ -37,12 +37,3 @@ def screenshot(path, region=None):
     # When all the images (only 1 in this example) are added to the destination,
     # finalize the CGImageDestination object.
     Quartz.CGImageDestinationFinalize(dest)
-
-
-if __name__ == '__main__':
-    # Capture full screen
-    screenshot("testscreenshot_full.png")
-
-    # Capture region (100x100 box from top-left)
-    region = CG.CGRectMake(0, 0, 100, 100)
-    screenshot("testscreenshot_partial.png", region=region)
