@@ -45,7 +45,6 @@ if __name__ == "__main__":
     y_offset = (1 - scale) * h
     h2 = int(h * scale)
 
-
     cam = Camera(0, { 'width': w, 'height': h })
     display = Display((w2/3,h2/3))
 

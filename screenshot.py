@@ -25,7 +25,7 @@ def screenshot(path, region=None):
 
     dest = Quartz.CGImageDestinationCreateWithURL(
         url,
-        LaunchServices.kUTTypePNG, # file type
+        LaunchServices.kUTTypeTIFF, # file type
         1, # 1 image in file
         None
         )

@@ -14,10 +14,11 @@ def timer(msg):
 
 if __name__ == '__main__':
     path = 'test/tmp.png'
-    region = CG.CGRectMake(0, 0, 800, 600)
-    # display = Display((800,600))
+    w, h = 768, 480
+    region = CG.CGRectMake(672, 45, w, h)
+    display = Display((w, h))
     while True:
         with timer('shot'):
-            screenshot(path)
+            screenshot(path, region=region)
             img = Image(path)
-            # img.save(display)
+            img.save(display)
