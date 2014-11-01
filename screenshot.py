@@ -3,6 +3,8 @@ import LaunchServices
 from Cocoa import NSURL
 import Quartz.CoreGraphics as CG
 
+# credit to https://github.com/troq/flappy-bird-player for this code
+
 def screenshot(path, region=None):
     """saves screenshot of given region to path
     :path: string path to save to

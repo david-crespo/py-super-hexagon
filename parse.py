@@ -1,7 +1,5 @@
-"""
-This parses a frame from Super Hexagon to extract the features we want, using
-Computer Vision.
-"""
+# credit to https://github.com/shaunlebron/super-hexagon-unwrapper
+# for this code (would have probably taken me weeks to figure out otherwise)
 
 from SimpleCV import Color, Display, Image
 

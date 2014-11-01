@@ -1,3 +1,6 @@
+# credit to https://github.com/shaunlebron/super-hexagon-unwrapper
+# for this code (would have probably taken me weeks to figure out otherwise)
+
 """
 This is an implementation of a binary heap that allows
 arbitrary node values to be changed.
@@ -27,7 +30,7 @@ class Heap:
 
     def normalize_index(self,i):
         return i if (0 <= i and i < len(self.array)) else None
-    
+
     def get_parent_index(self,i):
         return self.normalize_index((i+1)/2 - 1)
 
@@ -39,7 +42,7 @@ class Heap:
         self.array[i] = node
         if self.on_index_change:
             self.on_index_change(node, i)
-    
+
     def swap_nodes(self,i0,i1):
         node0 = self.array[i0]
         node1 = self.array[i1]
@@ -50,13 +53,13 @@ class Heap:
         if i0 is None or i1 is None:
             return False
         return self.is_higher(self.array[i0],self.array[i1])
-    
+
     def try_promote_node(self,i):
         parent_i = self.get_parent_index(i)
         if self.is_index_higher(i, parent_i):
             self.swap_nodes(i, parent_i)
             self.try_promote_node(parent_i)
-    
+
     def try_demote_node(self,i):
         child_i, next_child_i = self.get_child_indexes(i)
         if self.is_index_higher(next_child_i, child_i):
@@ -74,12 +77,12 @@ class Heap:
         i = len(self.array)-1
         self.place_node_at_index(node,i)
         self.try_promote_node(i)
-    
+
     def peek(self):
         if not self.array:
             raise EmptyHeapException('cannot peek at empty heap')
         return self.array[0]
-    
+
     def pop(self):
 
         # stop if nothing to pop
@@ -120,7 +123,7 @@ class TestHeapOrder(unittest.TestCase):
         def is_higher(a,b):
             return a < b
         self.heap = Heap(self.elements, is_higher)
-    
+
     def assert_order(self):
         """
         Assert that the heap is ordered by popping all elements from it
@@ -137,10 +140,10 @@ class TestHeapOrder(unittest.TestCase):
             except EmptyHeapException:
                 break
         self.assertEqual(num_popped, self.count)
-    
+
     def test_initial_order(self):
         self.assert_order()
-    
+
     def change_value_at_index(self, i):
         """
         Change the value at the given index to a random value, then shift the
@@ -148,7 +151,7 @@ class TestHeapOrder(unittest.TestCase):
         """
         self.heap.array[i] = random.randint(1,50)
         self.heap.reorder_node(i)
-    
+
     def test_reorder(self):
         """
         Asset that the heap remains ordered after changing many elements to
