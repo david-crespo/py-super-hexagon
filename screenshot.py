@@ -2,8 +2,16 @@ import Quartz
 import LaunchServices
 from Cocoa import NSURL
 import Quartz.CoreGraphics as CG
+from SimpleCV import Image
 
 # credit to https://github.com/troq/flappy-bird-player for this code
+
+tmp_frame_path = 'frame.tiff'
+
+def get_frame(region=None):
+    screenshot(tmp_frame_path, region=region)
+    return Image(tmp_frame_path)
+
 
 def screenshot(path, region=None):
     """saves screenshot of given region to path

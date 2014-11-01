@@ -2,20 +2,9 @@
 # for this code (would have probably taken me weeks to figure out otherwise)
 
 from SimpleCV import Color, Display, Image
-
 from simplify_polygon import simplify_polygon_by_angle
-
 from math import sqrt
-
-import contextlib
-import time
-
-@contextlib.contextmanager
-def timer(msg):
-    start = time.time()
-    yield
-    end = time.time()
-    print "%s: %.02fms" % (msg, (end-start)*1000)
+from util import timer
 
 class ParsedFrame:
     """

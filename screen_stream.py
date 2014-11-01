@@ -3,15 +3,7 @@ from parse import show_img, parse_frame
 from screenshot import screenshot
 import Quartz.CoreGraphics as CG
 
-import contextlib
-import time
-
-@contextlib.contextmanager
-def timer(msg):
-    start = time.time()
-    yield
-    end = time.time()
-    print "%s: %.02fms" % (msg, (end-start)*1000)
+from util import timer
 
 if __name__ == '__main__':
     path = 'frame.tiff'

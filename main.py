@@ -1,37 +1,29 @@
-from brain import decide_action
-from control import tap_space, press_buttons
-from parse import parse_frame
-from screenshot import screenshot
-
-from SimpleCV import Display, Image
+from SimpleCV import Display
 from Quartz.CoreGraphics import CGRectMake
-
-import contextlib
 import time
 
-@contextlib.contextmanager
-def timer(msg):
-    start = time.time()
-    yield
-    end = time.time()
-    print "%s: %.02fms" % (msg, (end-start)*1000)
+from brain import decide_left_or_right
+from control import tap_space, press_buttons
+from parse import parse_frame
+from screenshot import get_frame
+from viz import show_frame
 
-tmp_frame_path = 'frame.tiff'
-w, h = 768, 480
+wh = (w, h) = 768, 480
 region = CGRectMake(672, 45, w, h)
+display = Display(wh)
 
-def get_frame():
-    with timer('shoot'):
-        screenshot(tmp_frame_path, region=region)
-    with timer('read '):
-        frame = Image(tmp_frame_path)
-    return frame
+for i in range(3): # count to three
+    print '%d...' % (i+1)
+    time.sleep(1)
 
-if __name__ == '__main__':
-    # display = Display((w, h))
-    current_pressed = None
-    while True:
-        frame = get_img(path)
-        parsed_frame = parse_frame(frame)
-        to_press = decide_left_or_right(parsed_frame)
-        press_buttons(current_pressed, to_press)
+print 'Go!'
+tap_space()
+
+current_pressed = None
+while True:
+    frame = get_frame(region)
+    parsed_frame = parse_frame(frame)
+    show_frame(display, parsed_frame, frame)
+    to_press = decide_left_or_right(parsed_frame)
+    press_buttons(current_pressed, to_press)
+    current_pressed = to_press
