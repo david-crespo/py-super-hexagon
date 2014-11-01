@@ -23,17 +23,12 @@ def screenshot(path, region=None):
 
     url = NSURL.fileURLWithPath_(path)
 
-    dest = Quartz.CGImageDestinationCreateWithURL(
-        url,
-        LaunchServices.kUTTypeTIFF, # file type
-        1, # 1 image in file
-        None
-        )
+    dest = Quartz.CGImageDestinationCreateWithURL(url, LaunchServices.kUTTypeTIFF, 1, None)
 
     properties = {
         Quartz.kCGImagePropertyDPIWidth: dpi,
         Quartz.kCGImagePropertyDPIHeight: dpi,
-        }
+    }
 
     # Add the image to the destination, characterizing the image with
     # the properties dictionary.
