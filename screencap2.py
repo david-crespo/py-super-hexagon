@@ -68,33 +68,36 @@ class ScreenPixel(object):
         # Return BGRA as RGBA
         return (r, g, b, a)
 
-    def pixels(self, x, y, N):
-        # Pixel data is unsigned char (8bit unsigned integer),
-        # and there are for (blue,green,red,alpha)
-        data_format = "BBBB" * N
-
-        # Calculate offset, based on
-        # http://www.markj.net/iphone-uiimage-pixel-color/
+    def pixel2(self, x, y, s):
         offset = 4 * ((self.width*int(round(y))) + int(round(x)))
 
         # Unpack data from string into Python'y integers
-        big_tuple = struct.unpack_from(data_format, self._data, offset=offset)
-
-        results = []
-        for i in range(0, N * 4, 4):
-            b, g, r, a = big_tuple[ i : i+4 ]
-            results.append((r, g, b, a))
+        b, g, r, a = s.unpack_from(self._data, offset=offset)
 
         # Return BGRA as RGBA
+        return (r, g, b, a)
+
+
+    def all_pixels2(self):
+        s = struct.Struct('BBBB')
+
+        results = []
+        for x in range(self.width):
+            if x % 100 == 0: print x
+            for y in range(self.height):
+                results.append(self.pixel2(x, y, s))
+
         return results
 
     def all_pixels(self):
-        N = 2880 * 1800
-        data_format = 'BBBB' * N
+        # N = 2880 * 1800
+        # N = 2560 * 1440
+        data_format = 'B' * len(self._data)
+
         big_tuple = struct.unpack_from(data_format, self._data)
 
         results = []
-        for i in range(0, N * 4, 4):
+        for i in range(0, len(data_format), 4):
             b, g, r, a = big_tuple[ i : i+4 ]
             results.append((r, g, b, a))
 
