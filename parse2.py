@@ -6,10 +6,10 @@ from util import dist, show_img, timer, cart_to_polar
 import PIL
 
 import numpy as np
-from math import sqrt, ceil, pi
+from math import sqrt, ceil, pi, atan2
 
 class ParsedFrame:
-    def __init__(self, img, bimg, arr, cursor_angle):
+    def __init__(self, img, bimg, arr, cursor_r, cursor_angle):
         w,h = img.size()
 
         self.img = img
@@ -17,13 +17,17 @@ class ParsedFrame:
         self.bimg = bimg
         self.arr = arr
         self.rot = arr_to_polar(arr)
+        self.cursor_r = cursor_r
         self.cursor_angle = cursor_angle
 
-        rot_w, rot_h = self.rot.size()
+        rw, rh = self.rot.size()
 
-        cursor_y = int(rot_h * cursor_angle / 360)
+        max_r = ceil(dist(0, 0, w/2, h/2))
 
-        self.rot.dl().circle((5, cursor_y), 3, color=Color.RED, filled=True)
+        cursor_x = int(rw * cursor_r/max_r)
+        cursor_y = rh - int(rh * (cursor_angle + pi) / (2 * pi))
+
+        self.rot.dl().circle((cursor_x, cursor_y), 3, color=Color.RED, filled=True)
 
 
 def parse_frame(img):
@@ -58,16 +62,10 @@ def parse_frame(img):
 
     if cursor_blob:
         cursor_point = map(int, cursor_blob.centroid())
-        line_to_cursor = Line(img, ((midx, midy), cursor_point))
-        cursor_angle = 360 - line_to_cursor.angle()
-
-        cursor_dist = dist(midx, midy, cursor_point[0], cursor_point[1])
-
-        bimg = black_out_center(bimg, cursor_dist).applyLayers()
-
+        cursor_r, cursor_angle = cart_to_polar(cursor_point[0] - midx, midy - cursor_point[1])
+        bimg = black_out_center(bimg, cursor_r).applyLayers()
         arr = bimg.resize(100).getGrayNumpy() > 100
-
-        return ParsedFrame(img, bimg, arr, cursor_angle)
+        return ParsedFrame(img, bimg, arr, cursor_r, cursor_angle)
     else:
         return None
 
@@ -104,15 +102,12 @@ def arr_to_polar(arr):
     x_bound = new_w - 1
     y_bound = new_h - 1
 
-    # img = Image((new_w, new_h))
-    # dl = img.dl()
     new_arr = np.zeros((new_w, new_h), dtype=np.bool_)
 
     it =  np.nditer(arr, flags=['multi_index'])
     while not it.finished:
         x, y = it.multi_index
-
-        r, t = cart_to_polar(x-cx,y-cy)
+        r, t = cart_to_polar(x-cx,cy-y) # flip y
 
         new_x = x_bound - int(x_bound * (t + pi) / ( 2 * pi))
         new_y = int(y_bound * r/max_r)
@@ -146,7 +141,7 @@ def black_out_center(img, radius):
 
 def test():
     with timer('image'):
-        img = Image('train/371.png')
+        img = Image('train/12.png')
 
     print "image size (%d, %d)" % img.size()
 
@@ -154,11 +149,13 @@ def test():
         p = parse_frame(img)
         print '--------------'
 
-    print 'cursor angle: %d' % p.cursor_angle
-
     return p
 
 
 if __name__ == "__main__":
     p = test()
-    show_img(p.rot)
+    if p:
+        print 'cursor angle: %d' % p.cursor_angle
+        show_img(p.rot)
+    else:
+        print 'PARSE FAILED'
