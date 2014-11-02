@@ -1,8 +1,9 @@
 # credit to https://github.com/shaunlebron/super-hexagon-unwrapper
 # for this code (would have probably taken me weeks to figure out otherwise)
 
-from SimpleCV import Color, Display, Image
+from SimpleCV import Color, Display, Image, Line
 from simplify_polygon import simplify_polygon_by_angle
+from line_sample import extendToImageEdges, get_line_samples
 from math import sqrt
 from util import timer
 
@@ -28,11 +29,30 @@ class ParsedFrame:
         # (Just assume center of image is center point instead of using
         # center_blob.centroid())
         w,h = img.size()
+
+        # weird y-offset of center point required because I'm cutting off the
+        # top of the image in order to exclude the score junk. it would be neat
+        # if I could just black those sections out instead but for now I'm
+        # not going to bother
         self.center_point = (w/2, h/2 - 35)
 
         # vertices of the center polygon
         # (remove redundant vertices)
         self.center_vertices = simplify_polygon_by_angle(center_blob.hull())
+
+        half1 = []
+        half2 = []
+        for p in self.center_vertices[:3]:
+            b = self.center_img.binarize()
+            l = Line(b, (self.center_point, p))
+            l = extendToImageEdges(l)
+            samples = get_line_samples(l)
+            print '%d samples' % len(samples)
+            pivot = len(samples)/2
+            half1.append(samples[:pivot])
+            half2.append(samples[pivot:])
+
+        self.wall_states = half1 + half2
 
         self.cursor_vertices = None
         if cursor_blob:
@@ -173,19 +193,4 @@ def show_lines_on_img(p):
 
 
 if __name__ == "__main__":
-
-    # Run a test by drawing the reference frame parsed from a screenshot.
-    with timer('parse frame'):
-        p = parse_frame(Image('train/1.png'))
-    if p:
-        show_lines_on_img(p)
-
-    # Wait for user to close the window or break out of it.
-    while display.isNotDone():
-        try:
-            pass
-        except KeyboardInterrupt:
-            display.done = True
-        if display.mouseRight:
-            display.done = True
-    display.quit()
+    test()

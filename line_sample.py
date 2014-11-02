@@ -4,7 +4,7 @@
 import numpy as np
 from SimpleCV import Line
 
-def pixels_along(line, N=30):
+def get_line_samples(line, N=30):
     """
     **SUMMARY**
     Returns the mean color of pixels under the line.  Note that when the line falls "between" pixels, each pixels color contributes to the weighted average.
@@ -90,9 +90,12 @@ def pixels_along(line, N=30):
 
     idx_interval = weight_arr.size / N
     samples = []
-    for i in range(0, weight_arr.size + 1, idx_interval):
+    for i in range(0, idx_interval * N, idx_interval):
         segment_clrs    = weighted_clrs[ i : i + idx_interval ]
         segment_weights = weight_arr[ i : i + idx_interval ]
+
+        print segment_weights.size
+
         avg = sum(segment_clrs) / sum(segment_weights)
         avg = sum(avg) / 3
         samples.append(avg > 127.5)
