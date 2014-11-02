@@ -12,7 +12,7 @@ from viz import show_frame, show_frame2, draw_grid
 wh = (w, h) = 768, 480
 region = CGRectMake(672, 45, w, h)
 
-display = Display(wh)
+display = Display()
 
 for i in range(3): # count to three
     print '%d...' % (i+1)

@@ -1,6 +1,7 @@
 from SimpleCV import Display
 
-from math import sqrt
+from math import sqrt, atan2
+from cmath import polar, rect
 import contextlib
 import time
 
@@ -27,3 +28,6 @@ def show_img(img):
 
 def dist(x1, y1, x2, y2):
         return sqrt((x1-x2)**2 + (y1-y2)**2)
+
+def cart_to_polar(x,y):
+    return sqrt(x*x + y*y), atan2(y, x)

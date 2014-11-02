@@ -10,7 +10,7 @@ def show_frame(display, parsed_frame, frame):
 
 def show_frame2(display, parsed_frame, frame):
     if parsed_frame:
-        parsed_frame.bimg.save(display)
+        parsed_frame.rot.save(display)
     else:
         frame.save(display)
 

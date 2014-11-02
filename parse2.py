@@ -1,12 +1,12 @@
 # an alternative approach
 
 from SimpleCV import Color, Display, Image, Line
-from simplify_polygon import simplify_polygon_by_angle
-from util import dist, show_img
-from copy import copy
-from util import timer
-import numpy as np
+from util import dist, show_img, timer, cart_to_polar
 
+import PIL
+
+import numpy as np
+from math import sqrt, ceil, pi
 
 class ParsedFrame:
     def __init__(self, img, bimg, arr, cursor_angle):
@@ -16,7 +16,14 @@ class ParsedFrame:
         self.center_point = (w/2, h/2)
         self.bimg = bimg
         self.arr = arr
+        self.rot = arr_to_polar(arr)
         self.cursor_angle = cursor_angle
+
+        rot_w, rot_h = self.rot.size()
+
+        cursor_y = int(rot_h * cursor_angle / 360)
+
+        self.rot.dl().circle((5, cursor_y), 3, color=Color.RED, filled=True)
 
 
 def parse_frame(img):
@@ -52,7 +59,7 @@ def parse_frame(img):
     if cursor_blob:
         cursor_point = map(int, cursor_blob.centroid())
         line_to_cursor = Line(img, ((midx, midy), cursor_point))
-        cursor_angle = line_to_cursor.angle()
+        cursor_angle = 360 - line_to_cursor.angle()
 
         cursor_dist = dist(midx, midy, cursor_point[0], cursor_point[1])
 
@@ -86,6 +93,36 @@ def get_cursor_blob(blobs, h, midx, midy):
     return cursor_blob
 
 
+def arr_to_polar(arr):
+    w, h = arr.shape
+    cx, cy = w/2, h/2
+    max_r = ceil(dist(0, 0, cx, cy))
+
+    new_w = 100
+    new_h = 62
+
+    x_bound = new_w - 1
+    y_bound = new_h - 1
+
+    # img = Image((new_w, new_h))
+    # dl = img.dl()
+    new_arr = np.zeros((new_w, new_h), dtype=np.bool_)
+
+    it =  np.nditer(arr, flags=['multi_index'])
+    while not it.finished:
+        x, y = it.multi_index
+
+        r, t = cart_to_polar(x-cx,y-cy)
+
+        new_x = x_bound - int(x_bound * (t + pi) / ( 2 * pi))
+        new_y = int(y_bound * r/max_r)
+
+        new_arr[new_x, new_y] = it[0]
+        it.iternext()
+
+    return Image(PIL.Image.fromarray(np.uint8(new_arr*255))).dilate().resize(400)
+
+
 def black_out_GUI(img):
     dl = img.dl()
     dl.rectangle((0,0), (209, 31), filled=True)
@@ -109,7 +146,7 @@ def black_out_center(img, radius):
 
 def test():
     with timer('image'):
-        img = Image('train/2.png')
+        img = Image('train/371.png')
 
     print "image size (%d, %d)" % img.size()
 
@@ -117,9 +154,11 @@ def test():
         p = parse_frame(img)
         print '--------------'
 
+    print 'cursor angle: %d' % p.cursor_angle
+
     return p
 
 
 if __name__ == "__main__":
     p = test()
-    show_img(p.bimg)
+    show_img(p.rot)
