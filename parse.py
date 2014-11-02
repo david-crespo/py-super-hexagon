@@ -7,6 +7,7 @@ from line_sample import extendToImageEdges, get_line_samples, rotate_segment
 from math import sqrt, pi
 from copy import copy
 from util import timer
+import numpy as np
 
 class ParsedFrame:
     """
@@ -40,8 +41,11 @@ class ParsedFrame:
         # (remove redundant vertices)
         self.center_vertices = simplify_polygon_by_angle(center_blob.hull())
 
-        self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
+        #######################################
+        # MATRIX OF WALL STATES
+        #######################################
 
+        self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
         half1 = []
         half2 = []
         for p in self.rot_center_vertices[:3]:
@@ -50,14 +54,32 @@ class ParsedFrame:
             l = extendToImageEdges(l)
             samples = get_line_samples(l)
             pivot = len(samples)/2
-            half1.append(samples[:pivot])
-            half2.append(samples[pivot:])
 
-        self.wall_states = half1 + half2
+            # need to reverse the first because we want the samples from
+            # the inside out
+            half1.append(list(reversed(samples[:pivot])))
+            half1.append(samples[pivot:])
+
+        self.wall_states = np.array(half1 + half2)
+
+        #######################################
+        # CURSOR STATE
+        #######################################
+
+        # a discrete number representing angle of rotation, calculated
+        # clockwise from the line to the first hexagon vertex
+
+        self.cursor_point = map(int, cursor_blob.centroid())
+        line_to_cursor = Line(center_img, (self.center_point, self.cursor_point))
+        line_to_vertex = Line(center_img, (self.center_point, self.center_vertices[0]))
+        self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle())
+
+        if self.cursor_angle < 0:
+            self.cursor_angle = self.cursor_angle + 360
+
 
         self.cursor_vertices = None
-        if cursor_blob:
-            self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
+        self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
 
     def draw_frame(self, layer, linecolor=Color.RED, pointcolor=Color.WHITE):
         """
@@ -69,17 +91,17 @@ class ParsedFrame:
 
         # Draw the cursor
         if self.cursor_vertices:
-            width = 3
+            width = 2
             layer.polygon(self.cursor_vertices, color=linecolor,width=width)
 
         # Draw the center polygon.
-        width = 5
+        width = 3
         layer.polygon(self.center_vertices, color=linecolor,width=width)
 
         # Draw the axes by extending lines from the center past the vertices.
         c = self.center_point
         length = 100
-        for p in self.center_vertices:
+        for p in self.center_vertices[:1]:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
 
@@ -152,7 +174,7 @@ def parse_frame(img):
                 cursor_blob = b
                 if center_blob: break
 
-    if center_blob:
+    if center_blob and cursor_blob:
         return ParsedFrame(img, center_blob, cursor_blob, center_img)
     else:
         return None
@@ -178,18 +200,10 @@ def test():
     with timer('parse'):
         p = parse_frame(img)
 
+    print 'cursor angle: %d' % p.cursor_angle
+    print p.wall_states
+
     return p
-
-
-def test_line():
-    from SimpleCV import Line
-    from line_sample import extendToImageEdges
-
-    p = parse_frame(Image('train/1.png'))
-    b = p.center_img.binarize()
-    l = Line(b, (p.center_point, p.center_vertices[1]))
-    l = extendToImageEdges(l)
-    return p, l
 
 
 def show_lines_on_img(p):
