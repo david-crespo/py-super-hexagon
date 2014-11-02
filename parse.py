@@ -4,6 +4,7 @@
 from SimpleCV import Color, Display, Image, Line
 from simplify_polygon import simplify_polygon_by_angle
 from line_sample import create_ray, get_line_samples, get_angle, rotate_segment
+from util import show_img
 from math import sqrt, pi
 from copy import copy
 from util import timer
@@ -201,20 +202,6 @@ def parse_frame(img):
         return ParsedFrame(img, center_blob, cursor_blob, center_img)
     else:
         return None
-
-def show_img(img):
-    display = Display()
-    img.show()
-
-    # Wait for user to close the window or break out of it.
-    while display.isNotDone():
-        try:
-            pass
-        except KeyboardInterrupt:
-            display.done = True
-        if display.mouseRight:
-            display.done = True
-    display.quit()
 
 def test():
     with timer('image'):

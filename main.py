@@ -4,12 +4,13 @@ import time
 
 from brain import decide_left_or_right
 from control import tap_space, press_buttons
-from parse import parse_frame
+# from parse import parse_frame
+from parse2 import parse_frame
 from screenshot import get_frame
-from viz import show_frame, draw_grid
+from viz import show_frame, show_frame2, draw_grid
 
-wh = (w, h) = 768, 440
-region = CGRectMake(672, 85, w, h)
+wh = (w, h) = 768, 480
+region = CGRectMake(672, 45, w, h)
 
 display = Display(wh)
 
@@ -29,7 +30,7 @@ while True:
         frame.save('frames/' + str(c) + '.png')
         c += 1
 
-    draw_grid(display, parsed_frame, frame)
+    show_frame2(display, parsed_frame, frame)
     to_press = decide_left_or_right(parsed_frame)
     press_buttons(current_pressed, to_press)
     current_pressed = to_press

@@ -8,6 +8,12 @@ def show_frame(display, parsed_frame, frame):
     else:
         frame.save(display)
 
+def show_frame2(display, parsed_frame, frame):
+    if parsed_frame:
+        parsed_frame.bimg.save(display)
+    else:
+        frame.save(display)
+
 def draw_grid(display, parsed_frame, frame):
     if parsed_frame:
         sl = parsed_frame.wall_states.shape[0]
