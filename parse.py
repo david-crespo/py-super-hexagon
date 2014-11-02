@@ -50,20 +50,25 @@ class ParsedFrame:
 
         self.b = b
 
-        self.rot_center_vertices = []
-        for p in self.center_vertices:
-            self.rot_center_vertices.append(rotate_segment(self.center_point, p, pi/12))
-            self.rot_center_vertices.append(rotate_segment(self.center_point, p, 3*pi/12))
+        with timer('rotate'):
+            self.rot_center_vertices = []
+            for p in self.center_vertices:
+                self.rot_center_vertices.append(rotate_segment(self.center_point, p, pi/18))
+                self.rot_center_vertices.append(rotate_segment(self.center_point, p, 3*pi/18))
+                self.rot_center_vertices.append(rotate_segment(self.center_point, p, 5*pi/18))
 
-        self.sight_lines = []
-        for p in self.rot_center_vertices:
-            l = create_ray(b, self.center_point, p, w/2)
-            self.sight_lines.append(l)
+        with timer('create sightlines'):
+            self.sight_lines = []
+            for p in self.rot_center_vertices:
+                l = create_ray(b, self.center_point, p, 400)
+                self.sight_lines.append(l)
 
-        # sort by angle, clockwise from east
-        self.sight_lines.sort(key=lambda p: get_angle(p.end_points[0], p.end_points[1]))
+        with timer('sort sightlines'):
+            # sort by angle, clockwise from east
+            self.sight_lines.sort(key=lambda p: get_angle(p.end_points[0], p.end_points[1]))
 
-        self.wall_states = np.array([get_line_samples(l) for l in self.sight_lines])
+        with timer('calc wallstates'):
+            self.wall_states = np.array([get_line_samples(l) for l in self.sight_lines])
 
 
         #######################################
@@ -75,8 +80,8 @@ class ParsedFrame:
 
         self.cursor_point = map(int, cursor_blob.centroid())
         line_to_cursor = Line(center_img, (self.center_point, self.cursor_point))
-        line_to_vertex = Line(center_img, (self.center_point, self.sight_lines[0].end_points[0]))
-        self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle() + 30)
+        line_to_vertex = Line(center_img, (self.center_point, self.sight_lines[0].end_points[1]))
+        self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle() + 10)
 
         if self.cursor_angle < 0:
             self.cursor_angle = self.cursor_angle + 360
@@ -99,12 +104,12 @@ class ParsedFrame:
         width = 3
         # layer.polygon(self.center_vertices, color=linecolor,width=width)
 
-        # Draw the axes by extending lines from the center past the vertices.
-        c = self.center_point
-        length = 100
-        for p in self.center_vertices:
-            p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
-            layer.line(c,p2,color=linecolor,width=width)
+        # # Draw the axes by extending lines from the center past the vertices.
+        # c = self.center_point
+        # length = 100
+        # for p in self.center_vertices:
+        #     p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
+        #     layer.line(c,p2,color=linecolor,width=width)
 
         # p1, p2 = self.sight_lines[0].end_points
         # layer.line(p1,p2,color=Color.GREEN,width=width)
@@ -115,9 +120,13 @@ class ParsedFrame:
         # p1, p2 = self.sight_lines[2].end_points
         # layer.line(p1,p2,color=Color.CYAN,width=width)
 
-        for l in self.sight_lines:
+        c = [ Color.RED, Color.GREEN, Color.YELLOW, Color.CYAN ]
+
+        for i in range(len(self.sight_lines)):
+            l = self.sight_lines[i]
+            color = c[i%4]
             p1, p2 = l.end_points
-            layer.line(p1,p2,color=Color.GREEN,width=width)
+            layer.line(p1,p2,color=color,width=width)
 
         # Draw the reference points (center and vertices)
         def circle(p):
@@ -209,12 +218,13 @@ def show_img(img):
 
 def test():
     with timer('image'):
-        img = Image('train/3.png')
+        img = Image('train/4.png')
 
     print "image size (%d, %d)" % img.size()
 
     with timer('parse'):
         p = parse_frame(img)
+        print '--------------'
 
     print 'cursor angle: %d' % p.cursor_angle
     # print p.wall_states
@@ -222,19 +232,21 @@ def test():
     return p
 
 
-def show_lines_on_img(p):
+def draw_lines_on_img(p):
     # img = p.center_img.binarize()
     img = p.b
     p.draw_frame(img.dl())
-    show_img(img)
+    return img
 
 
 def draw_grid(p):
     sl = p.wall_states.shape[0]
     N = p.wall_states.shape[1]
 
-    chunk_w = 60
+    chunk_w = 30
     chunk_h = 20
+
+    cursor_mult = chunk_w * sl / 360
 
     img = Image((sl * chunk_w, N * chunk_h))
     dl = img.dl()
@@ -246,11 +258,12 @@ def draw_grid(p):
             if p.wall_states[x][N - y - 1]:
                 dl.rectangle((xp, yp), (chunk_w, chunk_h), color=Color.WHITE, filled=True)
 
-    dl.circle((p.cursor_angle * 2, chunk_h * N - 5), 5, color=Color.RED, filled=True)
-    show_img(img)
+    dl.circle((p.cursor_angle * cursor_mult, chunk_h * N - 5), 5, color=Color.RED, filled=True)
+    return img
 
 
 if __name__ == "__main__":
     p = test()
-    draw_grid(p)
-    # show_lines_on_img(p)
+    i1 = draw_grid(p)
+    i2 = draw_lines_on_img(p)
+    show_img(i1)

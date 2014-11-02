@@ -7,7 +7,7 @@ from SimpleCV import Line
 
 count = 1
 
-def get_line_samples(line, N=30):
+def get_line_samples(line, N=20):
     global count
     # walk the line, thresholding the value on N chunks of length L/N
 
@@ -15,16 +15,14 @@ def get_line_samples(line, N=30):
     #we're going to walk the line, and take the mean color from all the px
     #points -- there's probably a much more optimal way to do this
 
-    print '-----------'
-    print line.end_points
-    print '-----------'
+    # print '-----------'
+    # print line.end_points
+    # print '-----------'
 
     (minx, miny) = pt1
     (maxx, maxy) = pt2
 
     w, h = line.image.size()
-
-    print 'Dimensions: (%d, %d)' % (w,h)
 
     d_x = maxx - minx
     d_y = maxy - miny
@@ -32,33 +30,34 @@ def get_line_samples(line, N=30):
 
     px = []
     if abs(d_x) > abs(d_y):
-        d = float(d_y) / d_x
+        d = abs(float(d_y) / d_x)
+        if d_y < 0: d *= -1
+
         y = miny
         step = 1 if minx < maxx else -1
         for x in range(minx, maxx, step):
             inty = int(y)
-            s = '(%d, %d) -- ' % (x, inty)
-            print s,
             if 0 <= x < w and 0 <= inty < h:
                 pixel = line.image[x, inty]
             else:
                 pixel = (0.0,0.0,0.0)
-            print str(pixel)
+            # if pixel != (0.0,0.0,0.0): print '(%d, %d) -- %s' % (x, inty, str(pixel))
             px.append(pixel)
             y += d
     else:
-        d = float(d_x) / d_y
+        d = abs(float(d_x) / d_y)
+        if d_x < 0: d *= -1
+
         x = minx
         step = 1 if miny < maxy else -1
         for y in range(miny, maxy, step):
             intx = int(x)
             s = ('(%d, %d) -- ' % (intx, y))
-            print s,
             if 0 <= intx < w and 0 <= y < h:
                 pixel = line.image[intx, y]
             else:
                 pixel = (0.0,0.0,0.0)
-            print str(pixel)
+            # if pixel != (0.0,0.0,0.0): print '(%d, %d) -- %s' % (intx, y, str(pixel))
             px.append(pixel)
             x += d
 
@@ -82,8 +81,11 @@ def get_line_samples(line, N=30):
         # print str(i) + '  ',
         # print segment_clrs
         avg = sum(sum(segment_clrs) / segment_clrs.size)
-        # if avg > 30: print avg
-        samples.append(avg > 180)
+        # if avg > 30:
+            # print avg
+            # print str(i) + '  ',
+            # print segment_clrs
+        samples.append(avg > 130)
         idx += interval
 
     return samples
@@ -117,60 +119,3 @@ def create_ray(img, center, point, radius):
         endpoint = (int(center[0] + x * xsign), int(center[1] + y * ysign))
 
     return Line(img, (center, endpoint))
-
-
-def extendToImageEdges(line):
-        """
-        **SUMMARY**
-
-        Returns the line with endpoints on edges of image.
-        **RETURNS**
-        Returns a :py:class:`Line` object. If line does not lies entirely inside image then returns None.
-        **EXAMPLE**
-        >>> img = Image("lenna")
-        >>> l = Line(img, ((50, 150), (2, 225))
-        >>> cr_l = l.extendToImageEdges()
-        """
-        pt1, pt2 = line.end_points
-        pt1, pt2 = min(pt1, pt2), max(pt1, pt2)
-        x1, y1 = pt1
-        x2, y2 = pt2
-        w, h = line.image.width-1, line.image.height-1
-
-        if line.end_points[1][0] - line.end_points[0][0] == 0:
-            slope = float("inf")
-        else:
-            slope = float(line.end_points[1][1] - line.end_points[0][1])/float(line.end_points[1][0] - line.end_points[0][0])
-
-        if not 0 <= x1 <= w or not 0 <= x2 <= w or not 0 <= y1 <= w or not 0 <= y2 <= w:
-            logger.warning("At first the line should be cropped")
-            return None
-
-        ep = []
-        if slope == float('inf'):
-            if 0 <= x1 <= w and 0 <= x2 <= w:
-                return Line(line.image, ((x1, 0), (x2, h)))
-        elif slope == 0:
-            if 0 <= y1 <= w and 0 <= y2 <= w:
-                return Line(line.image, ((0, y1), (w, y2)))
-        else:
-            x = (slope*x1 - y1)/slope   # top edge y = 0
-            if 0 <= x <= w:
-                ep.append((int(round(x)), 0))
-
-            x = (slope*x1 + h - y1)/slope   # bottom edge y = h
-            if 0 <= x <= w:
-                ep.append((int(round(x)), h))
-
-            y = -slope*x1 + y1  # left edge x = 0
-            if 0 <= y <= h:
-                ep.append( (0, (int(round(y)))) )
-
-            y = slope*(w - x1) + y1 # right edge x = w
-            if 0 <= y <= h:
-                ep.append( (w, (int(round(y)))) )
-
-        ep = list(set(ep))  # remove duplicates of points if line cross image at corners
-        ep.sort()
-
-        return Line(line.image, ep)
