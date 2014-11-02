@@ -2,6 +2,7 @@
 # https://github.com/sightmachine/SimpleCV/blob/master/SimpleCV/Features/Detection.py
 
 import numpy as np
+from math import sin, cos
 from SimpleCV import Line
 
 def get_line_samples(line, N=30):
@@ -93,14 +94,23 @@ def get_line_samples(line, N=30):
     for i in range(0, idx_interval * N, idx_interval):
         segment_clrs    = weighted_clrs[ i : i + idx_interval ]
         segment_weights = weight_arr[ i : i + idx_interval ]
-
-        print segment_weights.size
-
         avg = sum(segment_clrs) / sum(segment_weights)
         avg = sum(avg) / 3
         samples.append(avg > 127.5)
 
     return samples
+
+def rotate_segment(center, outer, angle):
+    x = outer[0] - center[0]
+    y = outer[1] - center[1]
+    cosval = cos(angle)
+    sinval = sin(angle)
+
+    rot_x = x * cosval + y * sinval
+    rot_y = y * cosval - x * sinval
+
+    return (int(rot_x + center[0]), int(rot_y + center[1]))
+
 
 def extendToImageEdges(line):
         """

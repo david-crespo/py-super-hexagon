@@ -3,8 +3,9 @@
 
 from SimpleCV import Color, Display, Image, Line
 from simplify_polygon import simplify_polygon_by_angle
-from line_sample import extendToImageEdges, get_line_samples
-from math import sqrt
+from line_sample import extendToImageEdges, get_line_samples, rotate_segment
+from math import sqrt, pi
+from copy import copy
 from util import timer
 
 class ParsedFrame:
@@ -26,28 +27,28 @@ class ParsedFrame:
         self.cursor_blob = cursor_blob
 
         # midpoint of the center polygon
-        # (Just assume center of image is center point instead of using
-        # center_blob.centroid())
         w,h = img.size()
 
         # weird y-offset of center point required because I'm cutting off the
         # top of the image in order to exclude the score junk. it would be neat
         # if I could just black those sections out instead but for now I'm
         # not going to bother
-        self.center_point = (w/2, h/2 - 35)
+        cx, cy = center_blob.centroid()
+        self.center_point = (int(cx), int(cy))
 
         # vertices of the center polygon
         # (remove redundant vertices)
         self.center_vertices = simplify_polygon_by_angle(center_blob.hull())
 
+        self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
+
         half1 = []
         half2 = []
-        for p in self.center_vertices[:3]:
+        for p in self.rot_center_vertices[:3]:
             b = self.center_img.binarize()
             l = Line(b, (self.center_point, p))
             l = extendToImageEdges(l)
             samples = get_line_samples(l)
-            print '%d samples' % len(samples)
             pivot = len(samples)/2
             half1.append(samples[:pivot])
             half2.append(samples[pivot:])
@@ -78,7 +79,7 @@ class ParsedFrame:
         # Draw the axes by extending lines from the center past the vertices.
         c = self.center_point
         length = 100
-        for p in self.center_vertices[:2]:
+        for p in self.center_vertices:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
 
@@ -87,7 +88,7 @@ class ParsedFrame:
             layer.circle(p, 10, color=linecolor, filled=True)
             layer.circle(p, 5, color=pointcolor, filled=True)
         circle(self.center_point)
-        for p in self.center_vertices[:2]:
+        for p in self.center_vertices:
             circle(p)
 
 def parse_frame(img):
@@ -171,7 +172,12 @@ def show_img(img):
     display.quit()
 
 def test():
-    p = parse_frame(Image('train/1.png'))
+    with timer('image'):
+        img = Image('train/1.png')
+
+    with timer('parse'):
+        p = parse_frame(img)
+
     return p
 
 
@@ -193,4 +199,5 @@ def show_lines_on_img(p):
 
 
 if __name__ == "__main__":
-    test()
+    p = test()
+    show_lines_on_img(p)
