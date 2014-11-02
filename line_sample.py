@@ -5,7 +5,10 @@ import numpy as np
 from math import sin, cos, atan2, pi
 from SimpleCV import Line
 
-def get_line_samples(line, N=60):
+count = 1
+
+def get_line_samples(line, N=40):
+    global count
     # walk the line, thresholding the value on N chunks of length L/N
 
     (pt1, pt2) = line.end_points
@@ -20,44 +23,44 @@ def get_line_samples(line, N=60):
     #orient the line so it is going in the positive direction
 
     error = 0.0
-    d_err = d_y / d_x  #this is how much our "error" will increase in every step
+    d = float(d_y) / d_x  #this is how much our "error" will increase in every step
+
+    print '-----------'
+    print line.end_points
+    print d
+    print '-----------'
+
     px = []
-    if (d_err < 1):
-        y = miny
-        #iterate over X
-        for x in range(minx, maxx):
-            px.append(line.image[x, y])
-            error = error + d_err
-            if (error >= 0.5):
-                y = y + 1
-                error = error - 1.0
-    else:
-        #this is a "steep" line, so we iterate over X
-        #copy and paste.  Ugh, sorry.
-        x = minx
-        for y in range(miny, maxy):
-            px.append(line.image[x, y])
-            error = error + (1.0 / d_err) #we use the reciprocal of error
-            if (error >= 0.5):
-                x = x + 1
-                error = error - 1.0
+    y = miny
+    for x in range(minx, maxx):
+        pixel = line.image[x, int(y)]
+        # if count == 2: print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
+        px.append(pixel)
+        y += d
+
+    count += 1
 
     #once we have iterated over every pixel in the line, we avg the weights
     clr_arr = np.array(px)
     interval = float(clr_arr.size) / 3 / N
     int_interval = int(interval)
 
+    # print '-----------'
+    # print line.end_points
+    # print clr_arr.size / 3
+    # print interval
+    # print '-----------'
+
     samples = []
     idx = 0
     for chunk_number in range(N):
         i = int(idx)
         segment_clrs = clr_arr[ i : i + int_interval ]
-        print segment_clrs
-        # print i
+        # print str(i) + '  ',
         # print segment_clrs
-
         avg = sum(sum(segment_clrs) / segment_clrs.size)
-        samples.append(avg > 200)
+        if avg > 30: print avg
+        samples.append(avg > 180)
         idx += interval
 
     return samples

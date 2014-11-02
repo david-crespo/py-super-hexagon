@@ -48,6 +48,8 @@ class ParsedFrame:
         b.dl().polygon(self.cursor_vertices, filled=True)
         b.dl().polygon(self.center_vertices, filled=True)
 
+        self.b = b
+
         self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
 
         self.sight_lines = []
@@ -62,7 +64,6 @@ class ParsedFrame:
         half1 = []
         half2 = []
         for l in self.sight_lines:
-            print l.end_points
             samples = get_line_samples(l)
             pivot = len(samples)/2
 
@@ -84,7 +85,7 @@ class ParsedFrame:
         self.cursor_point = map(int, cursor_blob.centroid())
         line_to_cursor = Line(center_img, (self.center_point, self.cursor_point))
         line_to_vertex = Line(center_img, (self.center_point, self.sight_lines[0].end_points[0]))
-        self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle())
+        self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle() + 30)
 
         if self.cursor_angle < 0:
             self.cursor_angle = self.cursor_angle + 360
@@ -105,7 +106,7 @@ class ParsedFrame:
 
         # Draw the center polygon.
         width = 3
-        layer.polygon(self.center_vertices, color=linecolor,width=width)
+        # layer.polygon(self.center_vertices, color=linecolor,width=width)
 
         # Draw the axes by extending lines from the center past the vertices.
         c = self.center_point
@@ -113,7 +114,6 @@ class ParsedFrame:
         for p in self.center_vertices:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
-
 
         p1, p2 = self.sight_lines[0].end_points
         layer.line(p1,p2,color=Color.GREEN,width=width)
@@ -222,17 +222,39 @@ def test():
         p = parse_frame(img)
 
     print 'cursor angle: %d' % p.cursor_angle
-    print p.wall_states
+    # print p.wall_states
 
     return p
 
 
 def show_lines_on_img(p):
-    img = p.center_img.binarize()
+    # img = p.center_img.binarize()
+    img = p.b
     p.draw_frame(img.dl())
+    show_img(img)
+
+
+def draw_grid(p):
+    N = p.wall_states.shape[1]
+
+    chunk_w = 120
+    chunk_h = 20
+
+    img = Image((6 * chunk_w, N * chunk_h))
+    dl = img.dl()
+
+    for x in range(6):
+        for y in range(N):
+            xp = x * chunk_w
+            yp = (y+1)* chunk_h
+            if p.wall_states[x][N - y - 1]:
+                dl.rectangle((xp, yp), (chunk_w, chunk_h), color=Color.WHITE, filled=True)
+
+    dl.circle((p.cursor_angle * 2, chunk_h * N - 5), 5, color=Color.RED, filled=True)
     show_img(img)
 
 
 if __name__ == "__main__":
     p = test()
-    show_lines_on_img(p)
+    draw_grid(p)
+    # show_lines_on_img(p)
