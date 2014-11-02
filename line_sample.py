@@ -44,13 +44,21 @@ def get_line_samples(line, N=60):
 
     #once we have iterated over every pixel in the line, we avg the weights
     clr_arr = np.array(px)
+    interval = float(clr_arr.size) / 3 / N
+    int_interval = int(interval)
 
-    idx_interval = clr_arr.size / (3 * N)
     samples = []
-    for i in range(0, idx_interval * N, idx_interval):
-        segment_clrs = clr_arr[ i : i + idx_interval ]
+    idx = 0
+    for chunk_number in range(N):
+        i = int(idx)
+        segment_clrs = clr_arr[ i : i + int_interval ]
+        print segment_clrs
+        # print i
+        # print segment_clrs
+
         avg = sum(sum(segment_clrs) / segment_clrs.size)
         samples.append(avg > 200)
+        idx += interval
 
     return samples
 

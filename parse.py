@@ -222,7 +222,7 @@ def test():
         p = parse_frame(img)
 
     print 'cursor angle: %d' % p.cursor_angle
-    # print p.wall_states
+    print p.wall_states
 
     return p
 
