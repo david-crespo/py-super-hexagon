@@ -50,10 +50,13 @@ class ParsedFrame:
 
         self.b = b
 
-        self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
+        self.rot_center_vertices = []
+        for p in self.center_vertices:
+            self.rot_center_vertices.append(rotate_segment(self.center_point, p, pi/12))
+            self.rot_center_vertices.append(rotate_segment(self.center_point, p, 3*pi/12))
 
         self.sight_lines = []
-        for p in self.rot_center_vertices[:3]:
+        for p in self.rot_center_vertices[:6]:
             l = Line(b, (self.center_point, p))
             l = extendToImageEdges(l)
             self.sight_lines.append(l)
@@ -115,14 +118,18 @@ class ParsedFrame:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
 
-        p1, p2 = self.sight_lines[0].end_points
-        layer.line(p1,p2,color=Color.GREEN,width=width)
+        # p1, p2 = self.sight_lines[0].end_points
+        # layer.line(p1,p2,color=Color.GREEN,width=width)
 
-        p1, p2 = self.sight_lines[1].end_points
-        layer.line(p1,p2,color=Color.YELLOW,width=width)
+        # p1, p2 = self.sight_lines[1].end_points
+        # layer.line(p1,p2,color=Color.YELLOW,width=width)
 
-        p1, p2 = self.sight_lines[2].end_points
-        layer.line(p1,p2,color=Color.CYAN,width=width)
+        # p1, p2 = self.sight_lines[2].end_points
+        # layer.line(p1,p2,color=Color.CYAN,width=width)
+
+        for l in self.sight_lines:
+            p1, p2 = l.end_points
+            layer.line(p1,p2,color=Color.GREEN,width=width)
 
         # Draw the reference points (center and vertices)
         def circle(p):
@@ -214,7 +221,7 @@ def show_img(img):
 
 def test():
     with timer('image'):
-        img = Image('train/1.png')
+        img = Image('train/3.png')
 
     print "image size (%d, %d)" % img.size()
 
@@ -235,15 +242,16 @@ def show_lines_on_img(p):
 
 
 def draw_grid(p):
+    sl = p.wall_states.shape[0]
     N = p.wall_states.shape[1]
 
-    chunk_w = 120
+    chunk_w = 60
     chunk_h = 20
 
-    img = Image((6 * chunk_w, N * chunk_h))
+    img = Image((sl * chunk_w, N * chunk_h))
     dl = img.dl()
 
-    for x in range(6):
+    for x in range(sl):
         for y in range(N):
             xp = x * chunk_w
             yp = (y+1)* chunk_h

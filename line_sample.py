@@ -15,6 +15,10 @@ def get_line_samples(line, N=40):
     #we're going to walk the line, and take the mean color from all the px
     #points -- there's probably a much more optimal way to do this
 
+    print '-----------'
+    print line.end_points
+    print '-----------'
+
     (minx, miny) = pt1
     (maxx, maxy) = pt2
 
@@ -22,21 +26,25 @@ def get_line_samples(line, N=40):
     d_y = maxy - miny
     #orient the line so it is going in the positive direction
 
-    error = 0.0
-    d = float(d_y) / d_x  #this is how much our "error" will increase in every step
-
-    print '-----------'
-    print line.end_points
-    print d
-    print '-----------'
-
     px = []
-    y = miny
-    for x in range(minx, maxx):
-        pixel = line.image[x, int(y)]
-        # if count == 2: print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
-        px.append(pixel)
-        y += d
+    if abs(d_x) > abs(d_y):
+        d = float(d_y) / d_x
+        y = miny
+        step = 1 if minx < maxx else -1
+        for x in range(minx, maxx, step):
+            pixel = line.image[x, int(y)]
+            print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
+            px.append(pixel)
+            y += d
+    else:
+        d = float(d_x) / d_y
+        x = minx
+        step = 1 if miny < maxy else -1
+        for y in range(miny, maxy, step):
+            pixel = line.image[int(x), y]
+            print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
+            px.append(pixel)
+            x += d
 
     count += 1
 
@@ -45,8 +53,7 @@ def get_line_samples(line, N=40):
     interval = float(clr_arr.size) / 3 / N
     int_interval = int(interval)
 
-    # print '-----------'
-    # print line.end_points
+
     # print clr_arr.size / 3
     # print interval
     # print '-----------'
@@ -59,7 +66,7 @@ def get_line_samples(line, N=40):
         # print str(i) + '  ',
         # print segment_clrs
         avg = sum(sum(segment_clrs) / segment_clrs.size)
-        if avg > 30: print avg
+        # if avg > 30: print avg
         samples.append(avg > 180)
         idx += interval
 

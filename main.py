@@ -6,7 +6,7 @@ from brain import decide_left_or_right
 from control import tap_space, press_buttons
 from parse import parse_frame
 from screenshot import get_frame
-from viz import show_frame
+from viz import show_frame, draw_grid
 
 wh = (w, h) = 768, 440
 region = CGRectMake(672, 85, w, h)
@@ -21,10 +21,15 @@ print 'Go!'
 tap_space()
 
 current_pressed = None
+c = 0
 while True:
     frame = get_frame(region)
     parsed_frame = parse_frame(frame)
-    show_frame(display, parsed_frame, frame)
+    if parsed_frame:
+        frame.save('frames/' + str(c) + '.png')
+        c += 1
+
+    draw_grid(display, parsed_frame, frame)
     to_press = decide_left_or_right(parsed_frame)
     press_buttons(current_pressed, to_press)
     current_pressed = to_press
