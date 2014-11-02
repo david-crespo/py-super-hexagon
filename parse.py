@@ -3,7 +3,7 @@
 
 from SimpleCV import Color, Display, Image, Line
 from simplify_polygon import simplify_polygon_by_angle
-from line_sample import extendToImageEdges, get_line_samples, get_angle, rotate_segment
+from line_sample import create_ray, get_line_samples, get_angle, rotate_segment
 from math import sqrt, pi
 from copy import copy
 from util import timer
@@ -56,26 +56,14 @@ class ParsedFrame:
             self.rot_center_vertices.append(rotate_segment(self.center_point, p, 3*pi/12))
 
         self.sight_lines = []
-        for p in self.rot_center_vertices[:6]:
-            l = Line(b, (self.center_point, p))
-            l = extendToImageEdges(l)
+        for p in self.rot_center_vertices:
+            l = create_ray(b, self.center_point, p, w/2)
             self.sight_lines.append(l)
 
         # sort by angle, clockwise from east
         self.sight_lines.sort(key=lambda p: get_angle(p.end_points[0], p.end_points[1]))
 
-        half1 = []
-        half2 = []
-        for l in self.sight_lines:
-            samples = get_line_samples(l)
-            pivot = len(samples)/2
-
-            # need to reverse the first because we want the samples from
-            # the inside out
-            half1.append(list(reversed(samples[:pivot])))
-            half2.append(samples[pivot:])
-
-        self.wall_states = np.array(half1 + half2)
+        self.wall_states = np.array([get_line_samples(l) for l in self.sight_lines])
 
 
         #######################################

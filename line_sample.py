@@ -2,12 +2,12 @@
 # https://github.com/sightmachine/SimpleCV/blob/master/SimpleCV/Features/Detection.py
 
 import numpy as np
-from math import sin, cos, atan2, pi
+from math import sin, cos, atan2, pi, sqrt
 from SimpleCV import Line
 
 count = 1
 
-def get_line_samples(line, N=40):
+def get_line_samples(line, N=30):
     global count
     # walk the line, thresholding the value on N chunks of length L/N
 
@@ -22,6 +22,10 @@ def get_line_samples(line, N=40):
     (minx, miny) = pt1
     (maxx, maxy) = pt2
 
+    w, h = line.image.size()
+
+    print 'Dimensions: (%d, %d)' % (w,h)
+
     d_x = maxx - minx
     d_y = maxy - miny
     #orient the line so it is going in the positive direction
@@ -32,8 +36,14 @@ def get_line_samples(line, N=40):
         y = miny
         step = 1 if minx < maxx else -1
         for x in range(minx, maxx, step):
-            pixel = line.image[x, int(y)]
-            print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
+            inty = int(y)
+            s = '(%d, %d) -- ' % (x, inty)
+            print s,
+            if 0 <= x < w and 0 <= inty < h:
+                pixel = line.image[x, inty]
+            else:
+                pixel = (0.0,0.0,0.0)
+            print str(pixel)
             px.append(pixel)
             y += d
     else:
@@ -41,8 +51,14 @@ def get_line_samples(line, N=40):
         x = minx
         step = 1 if miny < maxy else -1
         for y in range(miny, maxy, step):
-            pixel = line.image[int(x), y]
-            print ('(%d, %d) -- ' + str(pixel)) % (x, int(y))
+            intx = int(x)
+            s = ('(%d, %d) -- ' % (intx, y))
+            print s,
+            if 0 <= intx < w and 0 <= y < h:
+                pixel = line.image[intx, y]
+            else:
+                pixel = (0.0,0.0,0.0)
+            print str(pixel)
             px.append(pixel)
             x += d
 
@@ -84,6 +100,24 @@ def rotate_segment(center, outer, angle):
     rot_x = x * cosval + y * sinval
     rot_y = y * cosval - x * sinval
     return (int(rot_x + center[0]), int(rot_y + center[1]))
+
+def create_ray(img, center, point, radius):
+    if point[0] == center[0]:
+        sign = 1 if point[1] > center[1] else -1
+        endpoint = (center[0], center[1] + sign * radius)
+    else:
+        slope = (float(point[1]) - center[1]) / (point[0] - center[0])
+
+        x = sqrt(radius**2 / (1 + slope**2))
+        y = abs(slope * x)
+
+        xsign = 1 if point[0] > center[0] else -1
+        ysign = 1 if point[1] > center[1] else -1
+
+        endpoint = (int(center[0] + x * xsign), int(center[1] + y * ysign))
+
+    return Line(img, (center, endpoint))
+
 
 def extendToImageEdges(line):
         """
