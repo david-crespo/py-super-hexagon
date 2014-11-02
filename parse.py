@@ -28,7 +28,7 @@ class ParsedFrame:
         # (Just assume center of image is center point instead of using
         # center_blob.centroid())
         w,h = img.size()
-        self.center_point = (w/2, h/2)
+        self.center_point = (w/2, h/2 - 35)
 
         # vertices of the center polygon
         # (remove redundant vertices)
@@ -58,7 +58,7 @@ class ParsedFrame:
         # Draw the axes by extending lines from the center past the vertices.
         c = self.center_point
         length = 100
-        for p in self.center_vertices:
+        for p in self.center_vertices[:2]:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
 
@@ -67,7 +67,7 @@ class ParsedFrame:
             layer.circle(p, 10, color=linecolor, filled=True)
             layer.circle(p, 5, color=pointcolor, filled=True)
         circle(self.center_point)
-        for p in self.center_vertices:
+        for p in self.center_vertices[:2]:
             circle(p)
 
 def parse_frame(img):
@@ -150,17 +150,35 @@ def show_img(img):
             display.done = True
     display.quit()
 
+def test():
+    p = parse_frame(Image('train/1.png'))
+    return p
+
+
+def test_line():
+    from SimpleCV import Line
+    from line_sample import extendToImageEdges
+
+    p = parse_frame(Image('train/1.png'))
+    b = p.center_img.binarize()
+    l = Line(b, (p.center_point, p.center_vertices[1]))
+    l = extendToImageEdges(l)
+    return p, l
+
+
+def show_lines_on_img(p):
+    img = p.center_img.binarize()
+    p.draw_frame(img.dl())
+    show_img(img)
+
 
 if __name__ == "__main__":
 
     # Run a test by drawing the reference frame parsed from a screenshot.
-    display = Display()
     with timer('parse frame'):
-        p = parse_frame(Image('test.jpg'))
+        p = parse_frame(Image('train/1.png'))
     if p:
-        img = p.center_img.binarize()
-        p.draw_frame(img.dl())
-        img.show()
+        show_lines_on_img(p)
 
     # Wait for user to close the window or break out of it.
     while display.isNotDone():

@@ -8,8 +8,9 @@ from parse import parse_frame
 from screenshot import get_frame
 from viz import show_frame
 
-wh = (w, h) = 768, 480
-region = CGRectMake(672, 45, w, h)
+wh = (w, h) = 768, 440
+region = CGRectMake(672, 85, w, h)
+
 display = Display(wh)
 
 for i in range(3): # count to three
