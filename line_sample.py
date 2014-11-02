@@ -2,58 +2,31 @@
 # https://github.com/sightmachine/SimpleCV/blob/master/SimpleCV/Features/Detection.py
 
 import numpy as np
-from math import sin, cos
+from math import sin, cos, atan2, pi
 from SimpleCV import Line
 
-def get_line_samples(line, N=30):
-    """
-    **SUMMARY**
-    Returns the mean color of pixels under the line.  Note that when the line falls "between" pixels, each pixels color contributes to the weighted average.
-    **RETURNS**
-    Returns an RGB triplet corresponding to the mean color of the feature.
-    **EXAMPLE**
-    >>> img = Image("lenna")
-    >>> l = img.findLines()
-    >>> c = l[0].meanColor()
-    """
+def get_line_samples(line, N=60):
+    # walk the line, thresholding the value on N chunks of length L/N
+
     (pt1, pt2) = line.end_points
     #we're going to walk the line, and take the mean color from all the px
     #points -- there's probably a much more optimal way to do this
-    (maxx,minx,maxy,miny) = line.extents()
+
+    (minx, miny) = pt1
+    (maxx, maxy) = pt2
 
     d_x = maxx - minx
     d_y = maxy - miny
     #orient the line so it is going in the positive direction
 
-    #if it's a straight one, we can just get mean color on the slice
-    if (d_x == 0.0):
-        return line.image[pt1[0]:pt1[0] + 1, miny:maxy].meanColor()
-    if (d_y == 0.0):
-        return line.image[minx:maxx, pt1[1]:pt1[1] + 1].meanColor()
-
     error = 0.0
     d_err = d_y / d_x  #this is how much our "error" will increase in every step
     px = []
-    weights = []
     if (d_err < 1):
         y = miny
         #iterate over X
         for x in range(minx, maxx):
-            #this is the pixel we would draw on, check the color at that px
-            #weight is reduced from 1.0 by the abs amount of error
             px.append(line.image[x, y])
-            weights.append(1.0 - abs(error))
-
-            #if we have error in either direction, we're going to use the px
-            #above or below
-            if (error > 0): #
-                px.append(line.image[x, y+1])
-                weights.append(error)
-
-            if (error < 0):
-                px.append(line.image[x, y-1])
-                weights.append(abs(error))
-
             error = error + d_err
             if (error >= 0.5):
                 y = y + 1
@@ -63,21 +36,7 @@ def get_line_samples(line, N=30):
         #copy and paste.  Ugh, sorry.
         x = minx
         for y in range(miny, maxy):
-            #this is the pixel we would draw on, check the color at that px
-            #weight is reduced from 1.0 by the abs amount of error
             px.append(line.image[x, y])
-            weights.append(1.0 - abs(error))
-
-            #if we have error in either direction, we're going to use the px
-            #above or below
-            if (error > 0): #
-                px.append(line.image[x + 1, y])
-                weights.append(error)
-
-            if (error < 0):
-                px.append(line.image[x - 1, y])
-                weights.append(abs(error))
-
             error = error + (1.0 / d_err) #we use the reciprocal of error
             if (error >= 0.5):
                 x = x + 1
@@ -85,32 +44,28 @@ def get_line_samples(line, N=30):
 
     #once we have iterated over every pixel in the line, we avg the weights
     clr_arr = np.array(px)
-    weight_arr = np.array(weights)
-    weighted_clrs = np.transpose(np.transpose(clr_arr) * weight_arr)
-    #multiply each color tuple by its weight
 
-    idx_interval = weight_arr.size / N
+    idx_interval = clr_arr.size / (3 * N)
     samples = []
     for i in range(0, idx_interval * N, idx_interval):
-        segment_clrs    = weighted_clrs[ i : i + idx_interval ]
-        segment_weights = weight_arr[ i : i + idx_interval ]
-        avg = sum(segment_clrs) / sum(segment_weights)
-        avg = sum(avg) / 3
-        samples.append(avg > 127.5)
+        segment_clrs = clr_arr[ i : i + idx_interval ]
+        avg = sum(sum(segment_clrs) / segment_clrs.size)
+        samples.append(avg > 200)
 
     return samples
 
-def rotate_segment(center, outer, angle):
-    x = outer[0] - center[0]
+def get_angle(center, outer):
     y = outer[1] - center[1]
-    cosval = cos(angle)
-    sinval = sin(angle)
+    x = outer[0] - center[0]
+    return int(atan2(y,x) * 360 / (2 * pi))
 
+def rotate_segment(center, outer, angle):
+    angle = -angle ## turn it clockwise
+    x, y = outer[0] - center[0], outer[1] - center[1]
+    cosval, sinval = cos(angle), sin(angle)
     rot_x = x * cosval + y * sinval
     rot_y = y * cosval - x * sinval
-
     return (int(rot_x + center[0]), int(rot_y + center[1]))
-
 
 def extendToImageEdges(line):
         """

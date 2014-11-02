@@ -3,7 +3,7 @@
 
 from SimpleCV import Color, Display, Image, Line
 from simplify_polygon import simplify_polygon_by_angle
-from line_sample import extendToImageEdges, get_line_samples, rotate_segment
+from line_sample import extendToImageEdges, get_line_samples, get_angle, rotate_segment
 from math import sqrt, pi
 from copy import copy
 from util import timer
@@ -36,34 +36,46 @@ class ParsedFrame:
         # not going to bother
         cx, cy = center_blob.centroid()
         self.center_point = (int(cx), int(cy))
-
-        # vertices of the center polygon
-        # (remove redundant vertices)
         self.center_vertices = simplify_polygon_by_angle(center_blob.hull())
+        self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
 
         #######################################
         # MATRIX OF WALL STATES
         #######################################
 
+        b = self.center_img.binarize()
+        # black out the cursor and the center hexagon (vry smrt)
+        b.dl().polygon(self.cursor_vertices, filled=True)
+        b.dl().polygon(self.center_vertices, filled=True)
+
         self.rot_center_vertices = [rotate_segment(self.center_point, p, pi/6) for p in self.center_vertices]
-        half1 = []
-        half2 = []
+
+        self.sight_lines = []
         for p in self.rot_center_vertices[:3]:
-            b = self.center_img.binarize()
             l = Line(b, (self.center_point, p))
             l = extendToImageEdges(l)
+            self.sight_lines.append(l)
+
+        # sort by angle, clockwise from east
+        self.sight_lines.sort(key=lambda p: get_angle(p.end_points[0], p.end_points[1]))
+
+        half1 = []
+        half2 = []
+        for l in self.sight_lines:
+            print l.end_points
             samples = get_line_samples(l)
             pivot = len(samples)/2
 
             # need to reverse the first because we want the samples from
             # the inside out
             half1.append(list(reversed(samples[:pivot])))
-            half1.append(samples[pivot:])
+            half2.append(samples[pivot:])
 
         self.wall_states = np.array(half1 + half2)
 
+
         #######################################
-        # CURSOR STATE
+        # CURSOR ANGLE
         #######################################
 
         # a discrete number representing angle of rotation, calculated
@@ -71,15 +83,12 @@ class ParsedFrame:
 
         self.cursor_point = map(int, cursor_blob.centroid())
         line_to_cursor = Line(center_img, (self.center_point, self.cursor_point))
-        line_to_vertex = Line(center_img, (self.center_point, self.center_vertices[0]))
+        line_to_vertex = Line(center_img, (self.center_point, self.sight_lines[0].end_points[0]))
         self.cursor_angle = int(line_to_cursor.angle() - line_to_vertex.angle())
 
         if self.cursor_angle < 0:
             self.cursor_angle = self.cursor_angle + 360
 
-
-        self.cursor_vertices = None
-        self.cursor_vertices = simplify_polygon_by_angle(cursor_blob.hull())
 
     def draw_frame(self, layer, linecolor=Color.RED, pointcolor=Color.WHITE):
         """
@@ -101,9 +110,19 @@ class ParsedFrame:
         # Draw the axes by extending lines from the center past the vertices.
         c = self.center_point
         length = 100
-        for p in self.center_vertices[:1]:
+        for p in self.center_vertices:
             p2 = (c[0] + length*(p[0]-c[0]), c[1] + length*(p[1]-c[1]))
             layer.line(c,p2,color=linecolor,width=width)
+
+
+        p1, p2 = self.sight_lines[0].end_points
+        layer.line(p1,p2,color=Color.GREEN,width=width)
+
+        p1, p2 = self.sight_lines[1].end_points
+        layer.line(p1,p2,color=Color.YELLOW,width=width)
+
+        p1, p2 = self.sight_lines[2].end_points
+        layer.line(p1,p2,color=Color.CYAN,width=width)
 
         # Draw the reference points (center and vertices)
         def circle(p):
@@ -197,11 +216,13 @@ def test():
     with timer('image'):
         img = Image('train/1.png')
 
+    print "image size (%d, %d)" % img.size()
+
     with timer('parse'):
         p = parse_frame(img)
 
     print 'cursor angle: %d' % p.cursor_angle
-    print p.wall_states
+    # print p.wall_states
 
     return p
 
