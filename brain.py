@@ -13,14 +13,14 @@ def decide_left_or_right(parsed_frame):
     action = None
 
     start = get_start(parsed_frame)
-    path = find_path(start, 30, parsed_frame.rot_arr)
+    path = find_path(start, 40, parsed_frame.rot_arr)
 
-    if path and len(path) > 15:
+    if path and len(path) > 10:
         start_x = start[0]
-        next = path[15]
+        next = path[8]
         next_x  = next[0]
 
-        min_x_jump = 4
+        min_x_jump = 0
         min_y_jump = 0
 
         print '-------------------'

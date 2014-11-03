@@ -73,7 +73,7 @@ def parse_frame(img):
         bimg = black_out_center(bimg, cursor_r).applyLayers()
         arr = bimg.resize(100).getGrayNumpy() > 100
         rot_arr = arr_to_polar(arr)
-        rot_img = Image(PIL.Image.fromarray(np.uint8(np.transpose(rot_arr)*255))).dilate()
+        rot_img = Image(PIL.Image.fromarray(np.uint8(np.transpose(rot_arr)*255))).dilate(iterations=3)
         rot_arr = rot_img.getGrayNumpy() > 100
         rot_img = rot_img.resize(400).flipVertical()
         return ParsedFrame(img, bimg, arr, rot_arr, rot_img, cursor_r, cursor_angle)

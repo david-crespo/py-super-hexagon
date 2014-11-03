@@ -22,7 +22,7 @@ current_pressed = None
 c = 0
 
 with timer('frame'):
-    frame = Image('train/33.png')
+    frame = Image('train/12a.png')
     parsed_frame = parse_frame(frame)
     to_press = None
     if parsed_frame:
@@ -31,13 +31,10 @@ with timer('frame'):
     current_pressed = to_press
 
     start = get_start(parsed_frame)
-    path = find_path(start, 30, parsed_frame.rot_arr)
+    path = find_path(start, 50, parsed_frame.rot_arr)
 
     dl = parsed_frame.rot_img.dl()
     w, h = parsed_frame.rot_img.size()
-
-    print w
-    print h
 
     for p in path:
         px = p[0] * w / 100

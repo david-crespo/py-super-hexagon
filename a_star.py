@@ -65,7 +65,7 @@ def heuristic_cost_estimate(a, goal_r):
 def is_farther_out(a, b):
     # x value is farther to the right in the transformed picture, i.e.,
     # farther out from the center in-game
-    return a[0] > b[0]
+    return a[1] > b[1]
 
 def reconstruct_path(came_from, current_node):
     if current_node in came_from:
