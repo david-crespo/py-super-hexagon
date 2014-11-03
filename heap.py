@@ -28,6 +28,9 @@ class Heap:
         for node in nodes:
             self.push(node)
 
+    def contains(self, node):
+        return node in self.array
+
     def normalize_index(self,i):
         return i if (0 <= i and i < len(self.array)) else None
 

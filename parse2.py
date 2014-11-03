@@ -18,14 +18,18 @@ class ParsedFrame:
         self.arr = arr
         self.rot = arr_to_polar(arr)
         self.cursor_r = cursor_r
-        self.cursor_angle = cursor_angle
+        self.cursor_angle = int(cursor_angle * 360/ (2 * pi))
 
         rw, rh = self.rot.size()
 
         max_r = ceil(dist(0, 0, w/2, h/2))
 
-        cursor_x = int(rw * cursor_r/max_r)
-        cursor_y = rh - int(rh * (cursor_angle + pi) / (2 * pi))
+        a = 180 - self.cursor_angle
+        if self.cursor_angle > 180:
+            a += 360
+
+        cursor_y = rh - int(rh * cursor_r/max_r)
+        cursor_x = int(float(rw) * a / 360)
 
         self.rot.dl().circle((cursor_x, cursor_y), 3, color=Color.RED, filled=True)
 
@@ -109,13 +113,13 @@ def arr_to_polar(arr):
         x, y = it.multi_index
         r, t = cart_to_polar(x-cx,cy-y) # flip y
 
-        new_x = x_bound - int(x_bound * (t + pi) / ( 2 * pi))
+        new_x = int(x_bound * (t + pi) / ( 2 * pi))
         new_y = int(y_bound * r/max_r)
 
         new_arr[new_x, new_y] = it[0]
         it.iternext()
 
-    return Image(PIL.Image.fromarray(np.uint8(new_arr*255))).dilate().resize(400)
+    return Image(PIL.Image.fromarray(np.uint8(np.transpose(new_arr)*255))).dilate().resize(400).rotate(180)
 
 
 def black_out_GUI(img):
@@ -141,7 +145,7 @@ def black_out_center(img, radius):
 
 def test():
     with timer('image'):
-        img = Image('train/12.png')
+        img = Image('train/372.png')
 
     print "image size (%d, %d)" % img.size()
 
