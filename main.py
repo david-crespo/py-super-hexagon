@@ -4,8 +4,7 @@ import time
 
 from brain import decide_left_or_right
 from control import tap_space, press_buttons
-# from parse import parse_frame
-from parse2 import parse_frame
+from parse import parse_frame
 from screenshot import get_frame
 from util import timer
 from viz import show_frame, show_frame2, draw_grid
