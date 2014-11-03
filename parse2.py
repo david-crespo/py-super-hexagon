@@ -9,29 +9,26 @@ import numpy as np
 from math import sqrt, ceil, pi, atan2
 
 class ParsedFrame:
-    def __init__(self, img, bimg, arr, cursor_r, cursor_angle):
+    def __init__(self, img, bimg, arr, rot_arr, rot_img, cursor_r, cursor_angle):
         w,h = img.size()
 
         self.img = img
         self.center_point = (w/2, h/2)
         self.bimg = bimg
         self.arr = arr
-        self.rot = arr_to_polar(arr)
+        self.rot_arr = rot_arr
+        self.rot_img = rot_img
         self.cursor_r = cursor_r
-        self.cursor_angle = int(cursor_angle * 360/ (2 * pi))
+        self.cursor_angle = cursor_angle
 
-        rw, rh = self.rot.size()
+        rw, rh = self.rot_img.size()
 
         max_r = ceil(dist(0, 0, w/2, h/2))
 
-        a = 180 - self.cursor_angle
-        if self.cursor_angle > 180:
-            a += 360
-
         cursor_y = rh - int(rh * cursor_r/max_r)
-        cursor_x = int(float(rw) * a / 360)
+        cursor_x = int(float(rw) * self.cursor_angle / 360)
 
-        self.rot.dl().circle((cursor_x, cursor_y), 3, color=Color.RED, filled=True)
+        self.rot_img.dl().circle((cursor_x, cursor_y), 3, color=Color.RED, filled=True)
 
 
 def parse_frame(img):
@@ -67,9 +64,19 @@ def parse_frame(img):
     if cursor_blob:
         cursor_point = map(int, cursor_blob.centroid())
         cursor_r, cursor_angle = cart_to_polar(cursor_point[0] - midx, midy - cursor_point[1])
+
+        cursor_angle = int(cursor_angle * 360/ (2 * pi))
+        cursor_angle = 180 - cursor_angle
+        if cursor_angle < 0:
+            a += 360
+
         bimg = black_out_center(bimg, cursor_r).applyLayers()
         arr = bimg.resize(100).getGrayNumpy() > 100
-        return ParsedFrame(img, bimg, arr, cursor_r, cursor_angle)
+        rot_arr = arr_to_polar(arr)
+        rot_img = Image(PIL.Image.fromarray(np.uint8(np.transpose(rot_arr)*255))).dilate()
+        rot_arr = rot_img.getGrayNumpy() > 100
+        rot_img = rot_img.resize(400).flipVertical()
+        return ParsedFrame(img, bimg, arr, rot_arr, rot_img, cursor_r, cursor_angle)
     else:
         return None
 
@@ -113,13 +120,13 @@ def arr_to_polar(arr):
         x, y = it.multi_index
         r, t = cart_to_polar(x-cx,cy-y) # flip y
 
-        new_x = int(x_bound * (t + pi) / ( 2 * pi))
+        new_x = x_bound - int(x_bound * (t + pi) / ( 2 * pi))
         new_y = int(y_bound * r/max_r)
 
         new_arr[new_x, new_y] = it[0]
         it.iternext()
 
-    return Image(PIL.Image.fromarray(np.uint8(np.transpose(new_arr)*255))).dilate().resize(400).rotate(180)
+    return new_arr
 
 
 def black_out_GUI(img):
@@ -160,6 +167,6 @@ if __name__ == "__main__":
     p = test()
     if p:
         print 'cursor angle: %d' % p.cursor_angle
-        show_img(p.rot)
+        show_img(p.rot_img)
     else:
         print 'PARSE FAILED'
