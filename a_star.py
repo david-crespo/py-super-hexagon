@@ -86,7 +86,7 @@ def build_comparer(walls_arr):
         is_farther_out = int(a[1] > b[1])
         has_more_space = int(wall_proximity(a, walls_arr) < wall_proximity(b, walls_arr))
         r_var = random.randint(0,1)
-        return (0.2 * is_farther_out + 0.6 * has_more_space + 0.2 * r_var) > 0.5
+        return (0.1 * is_farther_out + 0.7 * has_more_space + 0.2 * r_var) > 0.5
 
     return comparer
 

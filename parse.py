@@ -37,6 +37,8 @@ def parse_frame(img):
     Returns a ParsedFrame object containing selected features.
     """
 
+    img
+
     # helper image size variables
     w,h = img.size()
     midx,midy = w/2,h/2
@@ -53,7 +55,7 @@ def parse_frame(img):
     # We need to close any gaps around the center wall so we can detect its containing blob.
     # The gaps are resulting artifacts from video encoding.
     # The 'erode' function does this by expanding the dark parts of the image.
-    bimg = bg_img.erode().binarize()
+    bimg = bg_img.binarize()
     bimg = black_out_GUI(bimg)
 
     blobs = bimg.findBlobs()

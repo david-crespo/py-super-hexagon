@@ -2,7 +2,7 @@ from SimpleCV import Color, Display, Image
 from Quartz.CoreGraphics import CGRectMake
 import time
 
-from brain import decide_left_or_right, get_start, find_path
+from brain import decide_left_or_right, get_start, find_path, smooth_path
 from parse import parse_frame
 from screenshot import get_frame
 from util import timer, show_img
@@ -12,7 +12,7 @@ wh = (w, h) = 768, 480
 region = CGRectMake(672, 45, w, h)
 
 with timer('frame'):
-    frame = Image('train/3.png')
+    frame = Image('train/12a.png')
     parsed_frame = parse_frame(frame)
     to_press = None
     if parsed_frame:
@@ -22,6 +22,7 @@ with timer('frame'):
 
     start = get_start(parsed_frame)
     path = find_path(start, 50, parsed_frame.rot_arr)
+    path = smooth_path(path)
 
     dl = parsed_frame.rot_img.dl()
     w, h = parsed_frame.rot_img.size()

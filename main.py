@@ -14,7 +14,7 @@ region = CGRectMake(672, 45, w, h)
 
 # display = Display()
 
-for i in range(3): # count to three
+for i in range(1): # count to 1
     print '%d...' % (i+1)
     time.sleep(1)
 
@@ -24,17 +24,17 @@ tap_space()
 current_pressed = None
 c = 0
 while True:
-    # with timer('frame'):
-    try:
-        frame = get_frame(region)
-        parsed_frame = parse_frame(frame)
-        to_press = None
-        if parsed_frame:
-            to_press = decide_left_or_right(parsed_frame)
-            print to_press
+    with timer('frame'):
+        try:
+            frame = get_frame(region)
+            parsed_frame = parse_frame(frame)
+            to_press = None
+            if parsed_frame:
+                to_press = decide_left_or_right(parsed_frame)
+                print to_press
 
-        press_buttons(current_pressed, to_press)
-        current_pressed = to_press
-    except KeyboardInterrupt:
-        press_buttons(current_pressed, None)
-        break
+            press_buttons(current_pressed, to_press)
+            current_pressed = to_press
+        except KeyboardInterrupt:
+            press_buttons(current_pressed, None)
+            break

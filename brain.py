@@ -15,7 +15,8 @@ def decide_left_or_right(parsed_frame):
     start = get_start(parsed_frame)
     path = find_path(start, 40, parsed_frame.rot_arr)
 
-    if path and len(path) > 10:
+    if path and len(path) > 8:
+        path = smooth_path(path)
         start_x = start[0]
         next_x, next_y = path[1]
 
@@ -37,6 +38,33 @@ def decide_left_or_right(parsed_frame):
                 action = 'left'
 
     return action
+
+def smooth_path(path, r=5):
+    t = len(path)
+    smoothed = []
+    for i in range(t):
+        xs = []
+        ys = []
+        for d in range(-r, r+1):
+            xi = min(t-1, max(0, i+d))
+            xs.append(path[xi][0])
+            ys.append(path[xi][1])
+
+        xdiffs = [x2-x1 for (x1, x2) in zip(xs[:-1], xs[1:])]
+
+        if (sum(xdiffs) > 10):
+            xs = [x+100 if x<20 else x for x in xs]
+            x = sum(xs) / (2*r+1)
+            if x >= 100:
+                x -= 100
+        else:
+            x = sum(xs) / (2*r+1)
+
+        y = sum(ys) / (2*r+1)
+        smoothed.append((x,y))
+
+    return smoothed
+
 
 def get_start(parsed_frame):
     w, h = parsed_frame.img.size()
