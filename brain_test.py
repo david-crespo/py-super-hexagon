@@ -3,7 +3,6 @@ from Quartz.CoreGraphics import CGRectMake
 import time
 
 from brain import decide_left_or_right, get_start, find_path
-from control import tap_space, press_buttons
 from parse import parse_frame
 from screenshot import get_frame
 from util import timer, show_img
@@ -12,16 +11,8 @@ from viz import show_frame, show_frame2, draw_grid
 wh = (w, h) = 768, 480
 region = CGRectMake(672, 45, w, h)
 
-# display = Display()
-
-print 'Go!'
-tap_space()
-
-current_pressed = None
-c = 0
-
 with timer('frame'):
-    frame = Image('train/12a.png')
+    frame = Image('train/3.png')
     parsed_frame = parse_frame(frame)
     to_press = None
     if parsed_frame:

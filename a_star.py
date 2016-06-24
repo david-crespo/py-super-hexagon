@@ -1,8 +1,11 @@
 from heap import Heap
+import random
+
+random.seed()
 
 def find_path(start, goal_r, walls_arr):
     closedset = set()    # The set of nodes already evaluated.
-    openset = Heap([start], is_farther_out)    # The set of tentative nodes to be evaluated, initially containing the start node
+    openset = Heap([start], build_comparer(walls_arr))    # The set of tentative nodes to be evaluated, initially containing the start node
     came_from = dict()   # The map of navigated nodes.
 
     g_score = {}
@@ -37,6 +40,22 @@ def dist_between(current, neighbor):
     return 1
 
 
+def wall_proximity(point, walls_arr, r=3):
+    xbound, ybound = walls_arr.shape
+    x, y = point
+    xmin = max(0, x-r)
+    ymin = max(0, y-r)
+    xmax = min(xbound, x+r)
+    ymax = min(ybound, y+r)
+
+    total = 0
+    for i in range(xmin, xmax):
+        for j in range(ymin, ymax):
+            if walls_arr[i,j]: total += 1
+
+    return float(total) / ((ymax-ymin)*(xmax-xmin))
+
+
 def neighbor_nodes(current, walls_arr):
     neighbors = set()
     x, y = current
@@ -62,10 +81,14 @@ def neighbor_nodes(current, walls_arr):
 def heuristic_cost_estimate(a, goal_r):
     return abs(goal_r - a[1])
 
-def is_farther_out(a, b):
-    # x value is farther to the right in the transformed picture, i.e.,
-    # farther out from the center in-game
-    return a[1] > b[1]
+def build_comparer(walls_arr):
+    def comparer(a, b):
+        is_farther_out = int(a[1] > b[1])
+        has_more_space = int(wall_proximity(a, walls_arr) < wall_proximity(b, walls_arr))
+        r_var = random.randint(0,1)
+        return (0.2 * is_farther_out + 0.6 * has_more_space + 0.2 * r_var) > 0.5
+
+    return comparer
 
 def reconstruct_path(came_from, current_node):
     if current_node in came_from:
